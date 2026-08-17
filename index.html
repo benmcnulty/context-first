@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#22252b" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+  <meta name="application-name" content="Context First">
+  <meta name="apple-mobile-web-app-title" content="Context First">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <title>Context First | Ben McNulty</title>
+  <meta name="description" content="A working PostHog analytics case study and a retrospective on what a job application taught me about the way I want to work.">
+  <meta name="author" content="Ben McNulty">
+  <link rel="canonical" href="https://benlive.tv/context-first/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://benlive.tv/context-first/">
+  <meta property="og:title" content="Context First | Ben McNulty">
+  <meta property="og:description" content="A working PostHog analytics implementation, originally built as an application, kept as an ongoing case study of the values I look for in a team.">
+  <meta property="og:image" content="https://benlive.tv/img/social/og-context-first.jpg">
+  <meta property="og:site_name" content="Ben McNulty Portfolio">
+  <meta property="og:locale" content="en_US">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://benlive.tv/context-first/">
+  <meta name="twitter:title" content="Context First | Ben McNulty">
+  <meta name="twitter:description" content="A working PostHog analytics implementation, originally built as an application, kept as an ongoing case study of the values I look for in a team.">
+  <meta name="twitter:image" content="https://benlive.tv/img/social/og-context-first.jpg">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    "name": "Context First",
+    "url": "https://benlive.tv/context-first/",
+    "author": { "@type": "Person", "name": "Ben McNulty", "url": "https://benlive.tv/about/" },
+    "about": "Context engineering, PostHog implementation, product analytics case study",
+    "description": "A working PostHog analytics implementation, originally built as a job application, kept as an ongoing case study."
+  }
+  </script>
+
+  <!-- Inline theme init: runs synchronously before CSS to prevent FOUC -->
+  <script>(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}})()</script>
+  <!-- Inline deck init: establish the opening slide and view mode before CSS
+       paints. With JS disabled this never runs, so the document remains a
+       readable long-form page. Reads the stored view-mode preference itself
+       (rather than defaulting to paged and having context-first.js correct it
+       later) so a returning reference-mode visitor never sees a flash of
+       the paged layout before their deferred script runs. -->
+  <script>(function(){try{var ids=['intro','posthog','context','how','evidence','learning','humans-agents','why-now','inspect'];var h=(location.hash||'').replace('#','');document.documentElement.setAttribute('data-slide',ids.indexOf(h)!==-1?h:'intro');var vm=localStorage.getItem('contextfirst:viewmode');document.documentElement.setAttribute('data-view-mode',vm==='present'?'present':'reference');if(vm==='present')document.documentElement.classList.add('js-paged')}catch(e){document.documentElement.setAttribute('data-view-mode','reference')}})()</script>
+  <!-- PostHog project config: read by the shared js/analytics/index.js.
+       Not a secret — PostHog project API keys are client-side, write-only
+       identifiers by design. See docs/architecture.md for why this is set
+       here directly rather than injected by a build step. token/host/uiHost
+       match index.js's own hardcoded default exactly; set explicitly here
+       for the same transparency reason it always was. captureExceptions
+       and sessionRecording are page-scoped overrides the shared layer
+       doesn't enable by default — this is the one page where every error
+       is worth seeing, and where Session Replay (masked) exists to answer
+       one specific question (see /context-first/privacy/). -->
+  <script>window.__BL_ANALYTICS_CONFIG__ = {
+    posthogToken: 'phc_majTvvpPpYK2stHRELMkq6H3MD5YidtnYwFz76aDZJ5o',
+    posthogHost: 'https://t.benlive.tv',
+    posthogUiHost: 'https://us.posthog.com',
+    captureExceptions: true,
+    sessionRecording: { maskAllInputs: true, maskTextSelector: '[data-ph-mask]' }
+  };</script>
+
+  <!-- Link shared styles directly so they begin downloading together. Their
+       order is the established host cascade; context-first.css contains local rules only. -->
+  <link rel="stylesheet" href="/css/core/_variables.css">
+  <link rel="stylesheet" href="/css/core/_gradients.css">
+  <link rel="stylesheet" href="/css/core/_animations.css">
+  <link rel="stylesheet" href="/css/core/_utilities.css">
+  <link rel="stylesheet" href="/css/components/_navigation.css">
+  <link rel="stylesheet" href="/css/components/_analytics-consent.css">
+  <link rel="stylesheet" href="/context-first/context-first.css?v=contextfirst-chat-20260817j">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <nav>
+    <div class="container nav-content">
+      <a class="logo" href="/" aria-label="Ben Live Human in the Loop">
+        <span class="logo-text">Ben Live</span>
+        <span class="logo-divider" aria-hidden="true">
+          <svg class="logo-divider-icon" viewBox="0 0 32 32" fill="none">
+            <defs>
+              <linearGradient id="logo-divider-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="oklch(75% 0.18 195)" />
+                <stop offset="100%" stop-color="oklch(65% 0.22 245)" />
+              </linearGradient>
+            </defs>
+            <rect x="4" y="6" width="24" height="20" rx="6" stroke="url(#logo-divider-gradient)" stroke-width="2"/>
+            <circle cx="12" cy="15" r="2" stroke="url(#logo-divider-gradient)" stroke-width="2"/>
+            <circle cx="20" cy="15" r="2" stroke="url(#logo-divider-gradient)" stroke-width="2"/>
+            <path d="M12 20h8" stroke="url(#logo-divider-gradient)" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="logo-tagline">Human in the Loop</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="contextfirst-nav" aria-label="Toggle menu" aria-haspopup="menu" data-nav-toggle>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <ul class="nav-links" id="contextfirst-nav">
+        <li><a href="/ai-lab/">AI Lab</a></li>
+        <li><a href="/blog/">News</a></li>
+        <li><a href="/hire-me/">Hire Me</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- View toolbar: switches between the scrollable reference layout
+       (default — reuses the existing no-JS fallback CSS) and the guided,
+       paged slide show — see context-first.js's setViewMode(). Normal document flow,
+       not fixed-position, so it can't collide with any page's own fixed
+       content the way three earlier consent-UI designs did (see
+       docs/ARCHITECTURE.md's Session C section). Starts hidden: without
+       JS there is no controller to drive the toggle or populate Contents,
+       and the page is already the reference-style long-form document, so
+       showing these controls would just be dead UI. context-first.js reveals it
+       once it confirms it can actually drive the page. -->
+  <div class="deck-toolbar" role="group" aria-label="View controls" hidden>
+    <button type="button" class="view-toggle" data-action="toggle-view" aria-pressed="false">
+      <svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="13" rx="2"/>
+        <path d="M10.5 8.7v4.6l4-2.3-4-2.3z" fill="currentColor" stroke="none"/>
+        <path d="M8 21h8M12 17v4"/>
+      </svg>
+      Slide show
+    </button>
+    <button type="button" class="btn btn-secondary" data-action="open-toc" aria-haspopup="dialog">
+      <svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 6h13M8 12h13M8 18h13"/>
+        <circle cx="3.5" cy="6" r="1.1" fill="currentColor" stroke="none"/>
+        <circle cx="3.5" cy="12" r="1.1" fill="currentColor" stroke="none"/>
+        <circle cx="3.5" cy="18" r="1.1" fill="currentColor" stroke="none"/>
+      </svg>
+      Contents
+    </button>
+    <button type="button" class="btn btn-secondary" data-action="open-chat" aria-haspopup="dialog">
+      <svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 11.5a8.4 8.4 0 0 1-8.4 8.4 8.3 8.3 0 0 1-3.8-.9L3 21l1.9-5.8a8.3 8.3 0 0 1-.9-3.7A8.4 8.4 0 0 1 12.5 3a8.4 8.4 0 0 1 8.5 8.5z"/>
+      </svg>
+      Chat
+    </button>
+  </div>
+
+  <main id="main-content" class="deck" data-role="deck">
+
+    <section class="slide" id="intro" data-slide="intro" aria-labelledby="intro-heading">
+      <div class="slide-inner">
+        <p class="eyebrow">01 · Built for one application, kept for what it taught me</p>
+        <h1 id="intro-heading" class="slide-title slide-title-hero">CONTEXT FIRST</h1>
+        <p class="slide-lede">Context before credentials.</p>
+        <p class="slide-body">I built the original version of this presentation as my application for the Context Engineer role on PostHog's Wizard &amp; Docs team, and my first production implementation of PostHog. I didn't get the role. What I took from the process was worth keeping anyway, so this is that: the same working implementation, the same evidence, and an honest account of what I'd do differently.</p>
+        <div class="slide-actions">
+          <button type="button" class="btn btn-primary btn-glass" data-action="next"><span>Begin<span aria-hidden="true"> →</span></span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="posthog" data-slide="posthog" aria-labelledby="posthog-heading">
+      <div class="slide-inner slide-inner-split">
+        <div class="slide-text">
+          <p class="eyebrow">02 · What I look for</p>
+          <h2 id="posthog-heading" class="slide-title">What I look for</h2>
+          <p class="slide-body">I value teams that write decisions down, ship useful work, and learn from real usage. PostHog is the clearest example I've found of an engineering culture built that way.</p>
+          <ul class="trait-list">
+            <li>Autonomy over process theater</li>
+            <li>Written-down context over tribal knowledge</li>
+            <li>Small teams where writing and code are the same job</li>
+            <li>Shipped and observed over polished in private</li>
+          </ul>
+        </div>
+        <figure class="slide-figure art-card art-card-product" aria-hidden="true">
+          <svg class="illo" viewBox="0 0 400 320" data-animate-draw data-art="product-constellation">
+            <defs>
+              <!-- Shared node-tone gradients — reused by every diagram on this
+                   page (inline SVG ids resolve document-wide). Simple 2-stop
+                   diagonal sheen: a light tint at the near corner, the full
+                   saturated tone at the far corner. One color-mix call, not
+                   three — a 3-stop radial "sphere" was tried first and
+                   dropped: it didn't read as gradation on the small (7-9px)
+                   junction dots, and added nothing visible on the large ones. -->
+              <linearGradient id="node-grad-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:color-mix(in oklch, var(--art-cyan) 55%, white 45%)" />
+                <stop offset="100%" style="stop-color:var(--art-cyan)" />
+              </linearGradient>
+              <linearGradient id="node-grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:color-mix(in oklch, var(--art-blue) 55%, white 45%)" />
+                <stop offset="100%" style="stop-color:var(--art-blue)" />
+              </linearGradient>
+              <linearGradient id="node-grad-violet" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:color-mix(in oklch, var(--art-violet) 55%, white 45%)" />
+                <stop offset="100%" style="stop-color:var(--art-violet)" />
+              </linearGradient>
+              <linearGradient id="node-grad-pink" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:color-mix(in oklch, var(--art-pink) 55%, white 45%)" />
+                <stop offset="100%" style="stop-color:var(--art-pink)" />
+              </linearGradient>
+              <linearGradient id="node-grad-green" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:color-mix(in oklch, var(--art-green) 55%, white 45%)" />
+                <stop offset="100%" style="stop-color:var(--art-green)" />
+              </linearGradient>
+              <linearGradient id="node-grad-yellow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:color-mix(in oklch, var(--art-yellow) 40%, white 60%)" />
+                <stop offset="100%" style="stop-color:var(--art-yellow)" />
+              </linearGradient>
+              <!-- Diagram-specific background bloom (pink, matching this
+                   slide's .art-card-product pairing) — tight and visible
+                   behind the core only, not a large diffuse field. -->
+              <radialGradient id="pc-bloom" cx="50%" cy="50%" r="45%">
+                <stop offset="0%" style="stop-color:color-mix(in oklch, var(--art-pink) 55%, transparent)" />
+                <stop offset="100%" style="stop-color:transparent" />
+              </radialGradient>
+              <!-- Connector-line gradients: each runs from its outer node's
+                   own tone into the core's tone (pink), so the line reads as
+                   a real link between two colored things, not a flat stroke. -->
+              <linearGradient id="pc-line-cyan" gradientUnits="userSpaceOnUse" x1="90" y1="70" x2="200" y2="160">
+                <stop offset="0%" style="stop-color:var(--art-cyan)" /><stop offset="100%" style="stop-color:var(--art-pink)" />
+              </linearGradient>
+              <linearGradient id="pc-line-blue" gradientUnits="userSpaceOnUse" x1="310" y1="70" x2="200" y2="160">
+                <stop offset="0%" style="stop-color:var(--art-blue)" /><stop offset="100%" style="stop-color:var(--art-pink)" />
+              </linearGradient>
+              <linearGradient id="pc-line-green" gradientUnits="userSpaceOnUse" x1="60" y1="200" x2="200" y2="160">
+                <stop offset="0%" style="stop-color:var(--art-green)" /><stop offset="100%" style="stop-color:var(--art-pink)" />
+              </linearGradient>
+              <linearGradient id="pc-line-yellow" gradientUnits="userSpaceOnUse" x1="140" y1="270" x2="200" y2="160">
+                <stop offset="0%" style="stop-color:var(--art-yellow)" /><stop offset="100%" style="stop-color:var(--art-pink)" />
+              </linearGradient>
+              <linearGradient id="pc-line-violet" gradientUnits="userSpaceOnUse" x1="260" y1="270" x2="200" y2="160">
+                <stop offset="0%" style="stop-color:var(--art-violet)" /><stop offset="100%" style="stop-color:var(--art-pink)" />
+              </linearGradient>
+            </defs>
+            <circle class="art-bloom" cx="200" cy="160" r="90" fill="url(#pc-bloom)" />
+            <g class="art-connectors" fill="none">
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:0ms" stroke="url(#pc-line-cyan)" d="M200 160 L 90 70" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:60ms" stroke="url(#pc-line-blue)" d="M200 160 L 310 70" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:120ms" stroke="url(#pc-line-green)" d="M200 160 L 60 200" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:180ms" stroke="var(--art-pink)" d="M200 160 L 340 200" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:240ms" stroke="url(#pc-line-yellow)" d="M200 160 L 140 270" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:300ms" stroke="url(#pc-line-violet)" d="M200 160 L 260 270" />
+            </g>
+            <g class="art-nodes">
+              <circle id="ph-core" class="node-fill-core art-tone-pink" data-pop style="--pop-delay:480ms" cx="200" cy="160" r="34" fill="url(#node-grad-pink)" />
+              <text x="200" y="166" text-anchor="middle" class="node-label node-label-core" style="--label-delay:780ms">PostHog</text>
+
+              <circle class="node-fill art-tone-cyan" data-pop style="--pop-delay:560ms" cx="90" cy="70" r="22" fill="url(#node-grad-cyan)" />
+              <text x="90" y="39" text-anchor="middle" class="node-label" style="--label-delay:820ms">Analytics</text>
+
+              <circle class="node-fill art-tone-blue" data-pop style="--pop-delay:600ms" cx="310" cy="70" r="22" fill="url(#node-grad-blue)" />
+              <text x="310" y="39" text-anchor="middle" class="node-label" style="--label-delay:860ms">Session Replay</text>
+
+              <circle class="node-fill art-tone-green" data-pop style="--pop-delay:640ms" cx="60" cy="200" r="22" fill="url(#node-grad-green)" />
+              <text x="60" y="234" text-anchor="middle" class="node-label" style="--label-delay:900ms">Feature Flags</text>
+
+              <circle class="node-fill art-tone-pink" data-pop style="--pop-delay:680ms" cx="340" cy="200" r="22" fill="url(#node-grad-pink)" />
+              <text x="340" y="234" text-anchor="middle" class="node-label" style="--label-delay:940ms">Surveys</text>
+
+              <circle class="node-fill art-tone-yellow" data-pop style="--pop-delay:720ms" cx="140" cy="270" r="22" fill="url(#node-grad-yellow)" />
+              <text x="140" y="304" text-anchor="middle" class="node-label" style="--label-delay:980ms">Docs</text>
+
+              <circle class="node-fill art-tone-violet" data-pop style="--pop-delay:760ms" cx="260" cy="270" r="22" fill="url(#node-grad-violet)" />
+              <text x="260" y="304" text-anchor="middle" class="node-label" style="--label-delay:1020ms">Wizard</text>
+
+              <animate data-idle-pulse href="#ph-core" attributeName="opacity" values="1;0.8;1" dur="3.4s" begin="1.6s" repeatCount="indefinite" />
+            </g>
+          </svg>
+          <figcaption class="sr-only">Diagram: a product knowledge graph. Six PostHog product surfaces (Analytics, Session Replay, Feature Flags, Surveys, Docs, Wizard) connect to a central PostHog node.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="slide slide-centerpiece" id="context" data-slide="context" aria-labelledby="context-heading">
+      <div class="slide-inner slide-inner-split slide-inner-split-reverse">
+        <div class="slide-text">
+          <p class="eyebrow">03 · Why Context Engineering</p>
+          <h2 id="context-heading" class="slide-title">The throughline in my work</h2>
+          <p class="slide-body">Software engineering, reliability, interaction design, technical communication, and AI workflow engineering all depend on clear context. It is the thread that connects my work across those disciplines.</p>
+          <p class="slide-body slide-body-callout">Make the next step clear for the person or system doing the work.</p>
+          <div class="slide-actions">
+            <a class="btn btn-secondary" href="https://benlive.tv/about/">See the evidence on /about<span aria-hidden="true"> →</span></a>
+          </div>
+        </div>
+        <figure class="slide-figure art-card art-card-convergence" aria-hidden="true">
+          <svg class="illo illo-large" viewBox="0 0 400 340" data-animate-draw data-art="context-convergence">
+            <defs>
+              <radialGradient id="cc-bloom" cx="50%" cy="52%" r="38%">
+                <stop offset="0%" style="stop-color:color-mix(in oklch, var(--art-violet) 55%, transparent)" />
+                <stop offset="100%" style="stop-color:transparent" />
+              </radialGradient>
+              <linearGradient id="cc-line-cyan" gradientUnits="userSpaceOnUse" x1="45" y1="45" x2="200" y2="170">
+                <stop offset="0%" style="stop-color:var(--art-cyan)" /><stop offset="100%" style="stop-color:var(--art-violet)" />
+              </linearGradient>
+              <linearGradient id="cc-line-blue" gradientUnits="userSpaceOnUse" x1="355" y1="45" x2="200" y2="170">
+                <stop offset="0%" style="stop-color:var(--art-blue)" /><stop offset="100%" style="stop-color:var(--art-violet)" />
+              </linearGradient>
+              <linearGradient id="cc-line-pink" gradientUnits="userSpaceOnUse" x1="35" y1="170" x2="200" y2="170">
+                <stop offset="0%" style="stop-color:var(--art-pink)" /><stop offset="100%" style="stop-color:var(--art-violet)" />
+              </linearGradient>
+              <linearGradient id="cc-line-yellow" gradientUnits="userSpaceOnUse" x1="365" y1="170" x2="200" y2="170">
+                <stop offset="0%" style="stop-color:var(--art-yellow)" /><stop offset="100%" style="stop-color:var(--art-violet)" />
+              </linearGradient>
+              <linearGradient id="cc-line-green" gradientUnits="userSpaceOnUse" x1="120" y1="295" x2="200" y2="170">
+                <stop offset="0%" style="stop-color:var(--art-green)" /><stop offset="100%" style="stop-color:var(--art-violet)" />
+              </linearGradient>
+            </defs>
+            <circle class="art-bloom" cx="200" cy="170" r="90" fill="url(#cc-bloom)" />
+            <g class="art-connectors" fill="none">
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:0ms" stroke="url(#cc-line-cyan)" d="M45 45 C 120 62, 160 105, 198 165" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:60ms" stroke="url(#cc-line-blue)" d="M355 45 C 280 62, 240 105, 202 165" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:120ms" stroke="url(#cc-line-pink)" d="M35 170 C 95 170, 145 170, 195 170" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:180ms" stroke="url(#cc-line-yellow)" d="M365 170 C 305 170, 255 170, 205 170" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:240ms" stroke="url(#cc-line-green)" d="M120 295 C 150 248, 175 212, 200 175" />
+            </g>
+            <g class="art-nodes">
+              <circle class="node-fill art-tone-cyan" data-pop style="--pop-delay:480ms" cx="45" cy="45" r="20" fill="url(#node-grad-cyan)" /><text x="45" y="15" text-anchor="middle" class="node-label" style="--label-delay:750ms">SWE</text>
+              <circle class="node-fill art-tone-blue" data-pop style="--pop-delay:530ms" cx="355" cy="45" r="20" fill="url(#node-grad-blue)" /><text x="355" y="15" text-anchor="middle" class="node-label" style="--label-delay:790ms">QA / Reliability</text>
+              <circle class="node-fill art-tone-pink" data-pop style="--pop-delay:580ms" cx="35" cy="170" r="20" fill="url(#node-grad-pink)" /><text x="35" y="144" text-anchor="middle" class="node-label" style="--label-delay:830ms">Interaction Design</text>
+              <circle class="node-fill art-tone-yellow" data-pop style="--pop-delay:630ms" cx="365" cy="170" r="20" fill="url(#node-grad-yellow)" /><text x="365" y="144" text-anchor="middle" class="node-label" style="--label-delay:870ms">Tech Comms</text>
+              <circle class="node-fill art-tone-green" data-pop style="--pop-delay:680ms" cx="120" cy="295" r="20" fill="url(#node-grad-green)" /><text x="120" y="323" text-anchor="middle" class="node-label" style="--label-delay:910ms">AI Workflow</text>
+            </g>
+            <rect id="cc-core" data-draw pathLength="100" style="--draw-delay:900ms" class="converge-core art-tone-violet" x="122" y="143" width="156" height="54" rx="15" fill="url(#node-grad-violet)" />
+            <text x="200" y="175" text-anchor="middle" class="node-label node-label-core" style="--label-delay:1350ms">Context Engineering</text>
+            <animate data-idle-pulse href="#cc-core" attributeName="opacity" values="1;0.85;1" dur="3.6s" begin="1.8s" repeatCount="indefinite" />
+          </svg>
+          <figcaption class="sr-only">Diagram: five disciplines (software engineering, QA and reliability, interaction design, technical communication, and AI workflow engineering) converge on a central field labeled Context Engineering.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="slide" id="how" data-slide="how" aria-labelledby="how-heading">
+      <div class="slide-inner slide-inner-split">
+        <div class="slide-text">
+          <p class="eyebrow">04 · How I work</p>
+          <h2 id="how-heading" class="slide-title">How I work</h2>
+          <p class="slide-body">I start by understanding the problem, then structure the work, build it, test it, observe the result, and document what changed. This presentation followed that same process.</p>
+        </div>
+        <figure class="slide-figure art-card art-card-loop" aria-hidden="true">
+          <svg class="illo" viewBox="0 0 360 360" data-animate-draw data-art="work-loop">
+            <defs>
+              <linearGradient id="work-loop-gradient" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="var(--art-cyan)" />
+                <stop offset="0.34" stop-color="var(--art-blue)" />
+                <stop offset="0.68" stop-color="var(--art-pink)" />
+                <stop offset="1" stop-color="var(--art-yellow)" />
+              </linearGradient>
+              <radialGradient id="wl-bloom" cx="50%" cy="50%" r="35%">
+                <stop offset="0%" style="stop-color:color-mix(in oklch, var(--art-pink) 50%, transparent)" />
+                <stop offset="100%" style="stop-color:transparent" />
+              </radialGradient>
+            </defs>
+            <circle class="art-bloom" cx="180" cy="180" r="90" fill="url(#wl-bloom)" />
+            <circle class="loop-ring" cx="180" cy="180" r="130" pathLength="100" />
+            <text x="180" y="174" text-anchor="middle" class="loop-kicker">BUILD</text>
+            <text x="180" y="194" text-anchor="middle" class="loop-center-label">LEARN</text>
+            <!-- Exactly six nodes, matching the six steps named in this
+                 slide's copy (Understand, Structure, Build, Test, Observe,
+                 Document) — the diagram previously carried two extra steps
+                 ("Instrument", "Refine") the text never mentions. Evenly
+                 spaced at 60° increments around the ring, clockwise from
+                 the top, in the same order the copy names them. -->
+            <g class="art-nodes">
+              <circle class="node-fill art-tone-cyan" data-pop style="--pop-delay:200ms" cx="180" cy="50" r="19" fill="url(#node-grad-cyan)" /><text x="180" y="24" text-anchor="middle" class="node-label" style="--label-delay:420ms">Understand</text>
+              <circle class="node-fill art-tone-blue" data-pop style="--pop-delay:320ms" cx="293" cy="115" r="19" fill="url(#node-grad-blue)" /><text x="313" y="98" text-anchor="middle" class="node-label" style="--label-delay:540ms">Structure</text>
+              <circle class="node-fill art-tone-violet" data-pop style="--pop-delay:440ms" cx="293" cy="245" r="19" fill="url(#node-grad-violet)" /><text x="313" y="268" text-anchor="middle" class="node-label" style="--label-delay:660ms">Build</text>
+              <circle class="node-fill art-tone-pink" data-pop style="--pop-delay:560ms" cx="180" cy="310" r="19" fill="url(#node-grad-pink)" /><text x="180" y="336" text-anchor="middle" class="node-label" style="--label-delay:780ms">Test</text>
+              <circle class="node-fill art-tone-yellow" data-pop style="--pop-delay:680ms" cx="67" cy="245" r="19" fill="url(#node-grad-yellow)" /><text x="47" y="268" text-anchor="middle" class="node-label" style="--label-delay:900ms">Observe</text>
+              <circle class="node-fill art-tone-green" data-pop style="--pop-delay:800ms" cx="67" cy="115" r="19" fill="url(#node-grad-green)" /><text x="47" y="98" text-anchor="middle" class="node-label" style="--label-delay:1020ms">Document</text>
+            </g>
+          </svg>
+          <figcaption class="sr-only">Diagram: a six-step circular feedback loop (Understand, Structure, Build, Test, Observe, Document) that orbits back to itself.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="slide" id="evidence" data-slide="evidence" aria-labelledby="evidence-heading">
+      <div class="slide-inner">
+        <p class="eyebrow">05 · Evidence</p>
+        <h2 id="evidence-heading" class="slide-title">Relevant work</h2>
+        <p class="slide-body">Three projects that show how I approach context, systems, and documentation.</p>
+        <div class="evidence-grid">
+          <article class="evidence-card" data-tag="infra">
+            <h3>localcrew</h3>
+            <p class="evidence-meta">Local inference orchestration</p>
+            <p>A local-first harness that connects Ollama and OpenAI endpoints across a LAN into one usable inference network.</p>
+            <a class="evidence-link" href="https://github.com/benmcnulty/localcrew" target="_blank" rel="noopener" data-outbound="localcrew">View source<span aria-hidden="true"> ↗</span></a>
+          </article>
+          <article class="evidence-card" data-tag="tooling">
+            <h3>promptpad</h3>
+            <p class="evidence-meta">Local-first prompt refinement</p>
+            <p>A tool that turns brief instructions into polished, copy-ready prompts, running entirely on local LLM inference via Ollama.</p>
+            <a class="evidence-link" href="https://github.com/benmcnulty/promptpad" target="_blank" rel="noopener" data-outbound="promptpad">View source<span aria-hidden="true"> ↗</span></a>
+          </article>
+          <article class="evidence-card" data-tag="recursive">
+            <h3>prehog</h3>
+            <p class="evidence-meta">The original PostHog case study</p>
+            <p>The application this grew out of: a small PostHog implementation with Playwright coverage, a reviewer-facing README, and structured context for coding agents.</p>
+            <a class="evidence-link" href="https://github.com/benmcnulty/prehog" target="_blank" rel="noopener" data-outbound="prehog-repo">View source<span aria-hidden="true"> ↗</span></a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="learning" data-slide="learning" aria-labelledby="learning-heading">
+      <div class="slide-inner">
+        <p class="eyebrow">06 · Learning PostHog through implementation</p>
+        <h2 id="learning-heading" class="slide-title">What I am measuring</h2>
+        <p class="slide-body">This began as my first production PostHog install. I started with a short list of questions, then added only the events needed to answer them.</p>
+        <div class="qa-table" role="table" aria-label="Questions this page's analytics are designed to answer">
+          <div class="qa-row qa-row-head" role="row">
+            <span role="columnheader">Question</span>
+            <span role="columnheader">Signal</span>
+          </div>
+          <div class="qa-row" role="row"><span role="cell">Do people meaningfully progress through the deck?</span><span role="cell"><code>contextfirst_slide_viewed</code></span></div>
+          <div class="qa-row" role="row"><span role="cell">Where do sessions stop?</span><span role="cell"><code>contextfirst_slide_viewed</code> vs. <code>contextfirst_completed</code></span></div>
+          <div class="qa-row" role="row"><span role="cell">Is the navigation discoverable on mobile?</span><span role="cell"><code>contextfirst_navigation_used</code> + masked replay</span></div>
+          <div class="qa-row" role="row"><span role="cell">Do reviewers inspect the repository?</span><span role="cell"><code>contextfirst_outbound_clicked</code></span></div>
+          <div class="qa-row" role="row"><span role="cell">Does anyone let it auto-play, or take control?</span><span role="cell"><code>contextfirst_autoplay_toggled</code></span></div>
+        </div>
+        <p class="slide-body">That question-first approach spread beyond this one page. Building it properly here showed what a real analytics architecture actually needs: a shared consent layer, generalized into a small library now used across the site's primary public surfaces. It carries the same discipline everywhere: specific, meaningful interactions, with visitor control designed in from the start.</p>
+        <div class="slide-actions">
+          <button type="button" class="btn btn-secondary" data-action="open-transparency">What does this page measure?<span aria-hidden="true"> →</span></button>
+          <a class="btn btn-secondary" href="/privacy/">See what it covers<span aria-hidden="true"> →</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="humans-agents" data-slide="humans-agents" aria-labelledby="humans-agents-heading">
+      <div class="slide-inner slide-inner-split">
+        <div class="slide-text">
+          <p class="eyebrow">07 · Context for humans and agents</p>
+          <h2 id="humans-agents-heading" class="slide-title">Documentation for people and agents</h2>
+          <p class="slide-body">The project keeps its architecture notes, decisions, and analytics rules in the repository. The <code>README.md</code> gives a reviewer the story; <code>AGENTS.md</code> gives a coding agent the working context.</p>
+          <div class="slide-actions">
+            <a class="btn btn-secondary" href="https://github.com/benmcnulty/context-first/blob/main/AGENTS.md" target="_blank" rel="noopener" data-outbound="agents-md">Read AGENTS.md<span aria-hidden="true"> ↗</span></a>
+          </div>
+        </div>
+        <figure class="slide-figure art-card art-card-collaboration" aria-hidden="true">
+          <svg class="illo" viewBox="0 0 360 320" data-animate-draw data-art="shared-context">
+            <defs>
+              <radialGradient id="sc-bloom" cx="50%" cy="42%" r="40%">
+                <stop offset="0%" style="stop-color:color-mix(in oklch, var(--art-green) 50%, transparent)" />
+                <stop offset="100%" style="stop-color:transparent" />
+              </radialGradient>
+              <linearGradient id="sc-line-yellow" gradientUnits="userSpaceOnUse" x1="180" y1="56" x2="180" y2="110">
+                <stop offset="0%" style="stop-color:var(--art-yellow)" /><stop offset="100%" style="stop-color:var(--art-green)" />
+              </linearGradient>
+              <linearGradient id="sc-line-cyan-l" gradientUnits="userSpaceOnUse" x1="180" y1="110" x2="90" y2="194">
+                <stop offset="0%" style="stop-color:var(--art-green)" /><stop offset="100%" style="stop-color:var(--art-cyan)" />
+              </linearGradient>
+              <linearGradient id="sc-line-violet-r" gradientUnits="userSpaceOnUse" x1="180" y1="110" x2="270" y2="194">
+                <stop offset="0%" style="stop-color:var(--art-green)" /><stop offset="100%" style="stop-color:var(--art-violet)" />
+              </linearGradient>
+              <linearGradient id="sc-line-cyan-out" gradientUnits="userSpaceOnUse" x1="90" y1="246" x2="180" y2="284">
+                <stop offset="0%" style="stop-color:var(--art-cyan)" /><stop offset="100%" style="stop-color:var(--art-green)" />
+              </linearGradient>
+              <linearGradient id="sc-line-violet-out" gradientUnits="userSpaceOnUse" x1="270" y1="246" x2="180" y2="284">
+                <stop offset="0%" style="stop-color:var(--art-violet)" /><stop offset="100%" style="stop-color:var(--art-green)" />
+              </linearGradient>
+            </defs>
+            <circle class="art-bloom" cx="180" cy="150" r="90" fill="url(#sc-bloom)" />
+            <g class="art-connectors" fill="none">
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:0ms" stroke="url(#sc-line-yellow)" d="M180 60 C180 78 180 92 180 110" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:80ms" stroke="url(#sc-line-cyan-l)" d="M180 110 C142 132 108 162 90 191" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:80ms" stroke="url(#sc-line-violet-r)" d="M180 110 C218 132 252 162 270 191" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:160ms" stroke="url(#sc-line-cyan-out)" d="M90 249 C118 264 150 276 180 284" />
+              <path class="art-line" data-draw pathLength="100" style="--draw-delay:160ms" stroke="url(#sc-line-violet-out)" d="M270 249 C242 264 210 276 180 284" />
+            </g>
+            <g class="art-nodes">
+              <rect class="node-fill-core art-tone-yellow" data-pop style="--pop-delay:420ms" x="132" y="14" width="96" height="46" rx="14" fill="url(#node-grad-yellow)" />
+              <text x="180" y="42" text-anchor="middle" class="node-label node-label-core" style="--label-delay:680ms">Shared context</text>
+
+              <circle id="sc-junction" class="node-fill-core art-tone-green" data-pop style="--pop-delay:470ms" cx="180" cy="110" r="12" fill="url(#node-grad-green)" />
+
+              <circle class="node-fill art-tone-cyan" data-pop style="--pop-delay:520ms" cx="90" cy="220" r="29" fill="url(#node-grad-cyan)" /><text x="90" y="225" text-anchor="middle" class="node-label" style="--label-delay:760ms">Humans</text>
+              <circle class="node-fill art-tone-violet" data-pop style="--pop-delay:560ms" cx="270" cy="220" r="29" fill="url(#node-grad-violet)" /><text x="270" y="225" text-anchor="middle" class="node-label" style="--label-delay:800ms">Agents</text>
+
+              <rect class="node-fill art-tone-green" data-pop style="--pop-delay:660ms" x="132" y="284" width="96" height="34" rx="12" fill="url(#node-grad-green)" />
+              <text x="180" y="306" text-anchor="middle" class="node-label" style="--label-delay:900ms">Outcomes</text>
+
+              <animate data-idle-pulse href="#sc-junction" attributeName="opacity" values="1;0.75;1" dur="3s" begin="1.4s" repeatCount="indefinite" />
+            </g>
+          </svg>
+          <figcaption class="sr-only">Diagram: a shared context source branching into a human narrative path and an agent structured-context path, both converging on outcomes.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="slide" id="why-now" data-slide="why-now" aria-labelledby="why-now-heading">
+      <div class="slide-inner">
+        <p class="eyebrow">08 · What I'm carrying forward</p>
+        <h2 id="why-now-heading" class="slide-title">What stuck with me</h2>
+        <p class="slide-body">Ten-plus years building full-stack products, QA automation, documentation systems, and AI-assisted workflows led me to apply for a specific role at PostHog. I didn't get it. What stuck with me was <em>how</em> they say they work, verified against their own public handbook rather than taken on faith.</p>
+        <ul class="trait-list">
+          <li><strong><a href="https://posthog.com/handbook/company/culture" target="_blank" rel="noopener" data-outbound="handbook-culture">PostHog's culture handbook</a>:</strong> fully remote across 20+ countries, Tuesdays and Thursdays kept free of internal meetings, and a default to "not asking for permission" if you're acting in the company's interest, a bias toward shipping.</li>
+          <li><strong><a href="https://posthog.com/handbook/company/communication#email" target="_blank" rel="noopener" data-outbound="handbook-communication">PostHog's communication handbook</a>:</strong> async-first, with internal email avoided "in nearly all cases," with exceptions carved out for legal approvals, official company documents, and communication with external partners.</li>
+          <li><strong><a href="https://posthog.com/handbook/company/small-teams" target="_blank" rel="noopener" data-outbound="handbook-small-teams">PostHog's small-teams handbook</a>:</strong> each team runs "as close to its own startup as possible," with the final call on what ships and no need for external QA or control.</li>
+          <li><strong><a href="https://www.penguinrandomhouse.com/books/606529/no-rules-rules-by-reed-hastings-and-erin-meyer/" target="_blank" rel="noopener" data-outbound="no-rules-rules"><em>No Rules Rules</em></a> (Hastings &amp; Meyer) argues:</strong> give people context, not control, and trust them to act on it.</li>
+          <li><strong>PostHog names that book directly, twice:</strong> its <a href="https://posthog.com/handbook/story" target="_blank" rel="noopener" data-outbound="handbook-story">company story</a> lists <em>No Rules Rules</em> under "Things that influenced us," and its <a href="https://posthog.com/handbook/people/spending-money#guiding-principles" target="_blank" rel="noopener" data-outbound="handbook-spending">spending-money handbook</a> names it as the direct influence behind its context-based expense policy.</li>
+        </ul>
+        <p class="slide-body">That's a company-level influence, well beyond the one HR policy. The same context-over-control instinct, teams trusted with the final call, a default toward action over permission, shows up independently across the culture, small-teams, and communication handbooks too. That pattern is the standard I'm holding the rest of my job search to now, and it's close to how I already try to work. <a href="https://benlive.tv/about/">My resume</a> has the specifics.</p>
+      </div>
+    </section>
+
+    <section class="slide" id="inspect" data-slide="inspect" aria-labelledby="inspect-heading">
+      <div class="slide-inner">
+        <p class="eyebrow">09 · Inspect the work</p>
+        <h2 id="inspect-heading" class="slide-title">Take a look</h2>
+        <div class="inspect-grid">
+          <a class="inspect-card" href="https://github.com/benmcnulty/context-first" target="_blank" rel="noopener" data-outbound="inspect-repo">
+            <span class="inspect-label">GitHub</span>
+            <span class="inspect-detail">github.com/benmcnulty/context-first</span>
+          </a>
+          <a class="inspect-card" href="https://benlive.tv/blog/what-a-posthog-application-taught-me/" data-outbound="inspect-retrospective">
+            <span class="inspect-label">The retrospective</span>
+            <span class="inspect-detail">How this page came to exist</span>
+          </a>
+          <a class="inspect-card" href="https://benlive.tv/prehog/" data-outbound="inspect-prehog">
+            <span class="inspect-label">The original</span>
+            <span class="inspect-detail">benlive.tv/prehog</span>
+          </a>
+          <a class="inspect-card" href="https://benlive.tv/about/" data-outbound="inspect-about">
+            <span class="inspect-label">Resume</span>
+            <span class="inspect-detail">benlive.tv/about</span>
+          </a>
+          <a class="inspect-card" href="https://benlive.tv/portfolio/" data-outbound="inspect-portfolio">
+            <span class="inspect-label">Portfolio</span>
+            <span class="inspect-detail">benlive.tv/portfolio</span>
+          </a>
+          <a class="inspect-card" href="https://benlive.tv/" data-outbound="inspect-home">
+            <span class="inspect-label">Home</span>
+            <span class="inspect-detail">benlive.tv</span>
+          </a>
+        </div>
+        <div class="slide-actions">
+          <p class="slide-fine">A short feedback survey may appear here after you finish the presentation.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="deck-chrome" role="group" aria-label="Presentation controls">
+    <div class="deck-progress" role="progressbar" aria-label="Presentation progress" aria-valuemin="1" aria-valuemax="9" aria-valuenow="1">
+      <div class="deck-progress-bar" data-progress-bar></div>
+    </div>
+    <div class="deck-autoadvance-track" aria-hidden="true">
+      <div class="deck-autoadvance-timer" data-progress-timer></div>
+    </div>
+    <ol class="deck-dots" data-dots>
+      <li><button type="button" class="deck-dot" data-dot="intro" aria-label="Go to slide 1: Context First"><span>1</span></button></li>
+      <li><button type="button" class="deck-dot" data-dot="posthog" aria-label="Go to slide 2: Why PostHog"><span>2</span></button></li>
+      <li><button type="button" class="deck-dot" data-dot="context" aria-label="Go to slide 3: The Throughline in My Work"><span>3</span></button></li>
+      <li><button type="button" class="deck-dot" data-dot="how" aria-label="Go to slide 4: How I Work"><span>4</span></button></li>
+      <li><button type="button" class="deck-dot" data-dot="evidence" aria-label="Go to slide 5: Relevant Work"><span>5</span></button></li>
+      <li><button type="button" class="deck-dot" data-dot="learning" aria-label="Go to slide 6: What I Am Measuring"><span>6</span></button></li>
+      <li><button type="button" class="deck-dot" data-dot="humans-agents" aria-label="Go to slide 7: Documentation for People and Agents"><span>7</span></button></li>
+      <li><button type="button" class="deck-dot" data-dot="why-now" aria-label="Go to slide 8: Why This Role"><span>8</span></button></li>
+      <li><button type="button" class="deck-dot" data-dot="inspect" aria-label="Go to slide 9: Take a Look"><span>9</span></button></li>
+    </ol>
+    <div class="deck-controls" role="group" aria-label="Slide navigation">
+      <button type="button" class="deck-nav-btn" data-action="prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <span class="deck-position" data-position aria-hidden="true">1 / 9</span>
+      <button type="button" class="deck-nav-btn" data-action="next" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <div class="deck-playback" data-playback aria-live="off"><button type="button" class="deck-playback-btn" data-action="toggle-playback" aria-pressed="false" aria-label="Pause automatic slide advance"><svg class="icon-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 5l12 7-12 7V5z" stroke-linejoin="round"/></svg><svg class="icon-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 5v14M16 5v14" stroke-linecap="round"/></svg></button></div>
+    </div>
+  </div>
+
+  <!-- Contents panel: table of contents for both view modes. Its <ol> is
+       built by context-first.js from the slides' own headings (single source of
+       truth, same pattern as SLIDE_IDS) rather than duplicated by hand
+       here. -->
+  <div class="panel-overlay" data-toc-panel hidden>
+    <div class="panel-backdrop" data-toc-close></div>
+    <div class="panel-dialog" role="dialog" aria-modal="true" aria-labelledby="toc-heading">
+      <button type="button" class="panel-close" data-toc-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <h2 id="toc-heading">Contents</h2>
+      <ol class="toc-list" data-toc-list></ol>
+    </div>
+  </div>
+
+  <!-- Transparency panel: the self-referential "what does this page measure" disclosure,
+       extended with a live log of events this session has had accepted for
+       delivery (queued-but-not-yet-delivered counts too — see analytics.js's
+       own capture() comment and docs/analytics.md). -->
+  <div class="panel-overlay" data-transparency-panel hidden>
+    <div class="panel-backdrop" data-transparency-close></div>
+    <div class="panel-dialog" role="dialog" aria-modal="true" aria-labelledby="transparency-heading">
+      <button type="button" class="panel-close" data-transparency-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <h2 id="transparency-heading">What does this page measure?</h2>
+      <p>Twelve custom events, plus PostHog's standard pageview. Eleven are listed below; the twelfth is a hidden easter-egg event, left undetailed here to avoid spoiling it. See <a href="https://github.com/benmcnulty/context-first/blob/main/docs/analytics.md" target="_blank" rel="noopener">docs/analytics.md</a> for the full spec, including that one.</p>
+      <ul class="transparency-list">
+        <li><strong>contextfirst_slide_viewed</strong>: which sections hold attention, deduplicated per session.</li>
+        <li><strong>contextfirst_navigation_used</strong>: whether controls are discoverable, especially on mobile.</li>
+        <li><strong>contextfirst_autoplay_toggled</strong>: whether anyone lets the deck run itself or takes control.</li>
+        <li><strong>contextfirst_view_mode_changed</strong>: whether anyone actually uses reference mode, or the guided narrative is enough on its own.</li>
+        <li><strong>contextfirst_measurement_panel_opened</strong>: you opening this exact panel.</li>
+        <li><strong>contextfirst_outbound_clicked</strong>: which evidence links and CTAs get followed.</li>
+        <li><strong>contextfirst_completed</strong>: whether the deck gets finished.</li>
+        <li><strong>contextfirst_chat_opened</strong>: whether anyone opens the "Ask about how I work" chat.</li>
+        <li><strong>contextfirst_chat_starter_selected</strong>: which suggested question gets used, recorded only as a fixed short label.</li>
+        <li><strong>contextfirst_chat_conversation_initiated</strong>: whether the chat actually gets used (once per session), separate from just opening it.</li>
+        <li><strong>contextfirst_chat_reset</strong>: whether anyone starts the conversation over.</li>
+      </ul>
+      <p class="transparency-excluded"><strong>Deliberately not collected:</strong> names, emails, precise location, or any cross-site identity. Session replay is on for this page only, with every form input masked, and the entire chat dialog masked as rendered text (beyond just the input), the same treatment as the optional survey's rating and free-text answer, none of which replay ever shows even though the event data does. <strong>Chat message text, and the AI's responses, are never sent to PostHog</strong>, only the four fixed events above.</p>
+      <div class="event-log" data-event-log>
+        <p class="event-log-title">Live: what this session has had accepted for delivery</p>
+        <ul class="event-log-list" data-event-log-list>
+          <li class="event-log-empty" data-event-log-empty>Nothing captured yet. Navigate a slide and check back.</li>
+        </ul>
+        <span class="session-chip" data-session-chip hidden>
+          <span class="session-chip-dot" aria-hidden="true"></span>
+          <span data-session-chip-text>this session</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Survey panel: rendered by analytics.js from a real PostHog Survey object
+       (posthog.getActiveMatchingSurveys / canRenderSurvey), custom-styled to
+       match this page instead of PostHog's default popup. Hidden by default;
+       JS decides whether to show it after contextfirst_completed. -->
+  <div class="panel-overlay" data-survey-panel hidden>
+    <div class="panel-backdrop" data-survey-close></div>
+    <div class="panel-dialog" role="dialog" aria-modal="true" aria-labelledby="survey-heading">
+      <button type="button" class="panel-close" data-survey-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <h2 id="survey-heading" data-survey-title>Quick feedback</h2>
+      <div data-survey-body><!-- populated by analytics.js from the live Survey object --></div>
+    </div>
+  </div>
+
+  <!-- Chat panel: a toggleable "ask about PostHog fit" chat — a themed
+       instance of the shared AI Lab chat foundation documented in the
+       benlive repo's docs/CHAT_ARCHITECTURE.md, not a fork of it. Reuses
+       this file's own openPanelModal/closePanelModal pair via
+       window.__contextfirstPanelModal (see context-first.js); chat.js owns everything
+       inside this markup.
+
+       data-ph-mask on the whole dialog: session replay's maskAllInputs
+       only covers <input>/<textarea> elements while they're being typed
+       into — it does NOT mask ordinary rendered DOM text, which is
+       exactly what chat.js renders both the visitor's question and the
+       AI's response as (via chat-transcript.js's .content elements).
+       window.__BL_ANALYTICS_CONFIG__.sessionRecording.maskTextSelector
+       is already configured to '[data-ph-mask]' (see index.html's
+       <head>), so this attribute is the actual mechanism, not a no-op —
+       masking the whole dialog rather than just .chat-messages also
+       covers the starter-question buttons and any transient error text,
+       which are privacy-sensitive for the same reason. -->
+  <div class="panel-overlay" data-chat-panel hidden>
+    <div class="panel-backdrop" data-chat-close></div>
+    <div class="panel-dialog panel-dialog-chat" role="dialog" aria-modal="true" aria-labelledby="chat-heading" data-ph-mask>
+      <button type="button" class="panel-close" data-chat-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <h2 id="chat-heading">Ask about how I work</h2>
+      <p class="chat-panel-intro">Answers from this page's own content: Ben's approach to context, working style, and what he took from applying to PostHog.</p>
+      <p class="chat-panel-privacy-note">
+        Messages go to a third-party AI model, a separate destination from PostHog entirely, and may be logged by that provider.
+        See <a href="/context-first/privacy/#ai-chat-messages" target="_blank" rel="noopener noreferrer">what's collected</a>.
+      </p>
+      <div class="chat-starters" data-chat-starters>
+        <button type="button" class="chat-starter" data-starter="culture">What does "context, not control" mean to you?</button>
+        <button type="button" class="chat-starter" data-starter="throughline">What's the throughline across Ben's work?</button>
+        <button type="button" class="chat-starter" data-starter="analytics">Why build this page's analytics this way?</button>
+        <button type="button" class="chat-starter" data-starter="why-now">What stuck with you from this process?</button>
+      </div>
+      <div class="chat-messages" data-chat-messages tabindex="0" role="log" aria-live="polite" aria-label="Chat messages"></div>
+      <form class="chat-form" data-chat-form>
+        <!-- maxlength matches functions/index.js's MAX_MESSAGE_LENGTH —
+             this is UX feedback only; the server enforces the
+             authoritative limit regardless of what the client sends. -->
+        <input type="text" data-chat-input placeholder="Ask a question..." autocomplete="off" required aria-label="Message" maxlength="4000">
+        <button type="submit" data-chat-send aria-label="Send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        </button>
+      </form>
+      <div class="chat-panel-footer">
+        <button type="button" class="chat-reset" data-chat-reset>Reset conversation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- The standard site footer, same component every other page uses.
+       In present/paged mode (body.js-paged) this becomes an unplaced
+       grid item, clipped by the page's own overflow:hidden — invisible
+       until the visitor switches to reference mode, where it sits at
+       the true end of the (now normally scrollable) document, matching
+       how /ai-lab/chat/ keeps its footer off-screen until scrolled to.
+       Its presence also gives analytics/index.js's injectFooterLink()
+       a `.site-footer .footer-links` to use instead of falling back to
+       cramming the "Analytics: On · Privacy settings" link into nav. -->
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/ai-lab/">AI Lab</a>
+        <a href="/hire-me/">Hire Me</a>
+      </div>
+      <button class="theme-toggle" type="button" aria-pressed="false" data-theme-toggle>
+        <span class="theme-toggle-icon" aria-hidden="true">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="4.2"/>
+            <path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/>
+          </svg>
+        </span>
+      </button>
+    </div>
+    <div class="container footer-meta">
+      <p class="footer-copy">&copy; 2026 Ben McNulty</p>
+    </div>
+  </footer>
+
+  <script src="/js/theme-toggle.js" defer></script>
+  <script src="/js/nav-toggle.js" defer></script>
+  <script src="/js/animation-observer.js" defer></script>
+  <!-- Shared analytics layer first (deferred scripts run in source order),
+       so window.BenLiveAnalytics exists before contextfirst/analytics.js's own
+       deferred script runs. -->
+  <script src="/js/analytics/consent.js" defer></script>
+  <script src="/js/analytics/events.js" defer></script>
+  <script src="/js/analytics/index.js" defer></script>
+  <script src="/context-first/context-first.js?v=contextfirst-chat-20260817j" defer></script>
+  <script src="/context-first/analytics.js?v=contextfirst-chat-20260817j" defer></script>
+  <!-- Shared chat foundation (see docs/CHAT_ARCHITECTURE.md in the
+       benlive repo) — chat.js is the only contextfirst-specific file; the rest
+       are the same modules every AI Lab chat app uses, configured not
+       forked. No chat-storage.js: this instance has no tier switcher, so
+       nothing needs persisting.
+
+       Every changed asset here shares one version query, context-first.js
+       included — a returning visitor combining a stale-cached context-first.js
+       (predating window.__contextfirstPanelModal) with fresh HTML/chat.js
+       would otherwise throw when chat.js calls that bridge. firebase.json
+       gives JS/CSS a 1-hour freshness lifetime plus stale-while-revalidate,
+       so this isn't a theoretical gap. Bump this one string on every
+       future change to any file in this list, together. -->
+  <script src="/js/api/openrouter-client.js?v=chat-foundation-20260814" defer></script>
+  <script src="/js/api/chat-config.js?v=chat-foundation-20260814" defer></script>
+  <script src="/js/api/chat-errors.js?v=chat-foundation-20260814" defer></script>
+  <script src="/js/utils/markdown-parser.js" defer></script>
+  <script src="/js/components/chat-transcript.js?v=chat-foundation-20260814" defer></script>
+  <script src="/context-first/chat.js?v=contextfirst-chat-20260817j" defer></script>
+</body>
+</html>

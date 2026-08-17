@@ -1,0 +1,229 @@
+# Architecture
+
+**Provenance note:** `context-first` copies its mechanics (paging, view
+modes, autoplay, the modal/panel pattern, the analytics adapter) directly
+from [`prehog`](https://github.com/benmcnulty/prehog), which built and
+documented this architecture first. This document describes
+`context-first`'s own configuration; where the underlying design is
+identical, the reasoning is inherited rather than re-derived.
+
+## Integration model
+
+`context-first` is developed and versioned as its own repository
+(`github.com/benmcnulty/context-first`) and mounted into the `benlive.tv` static
+site as a **git submodule** at `public/context-first/`.
+
+```
+benlive.tv/ (root repo, no remote — functions, tests, docs, config)
+ └─ public/ (gitlink → github.com/benmcnulty/benlive, Firebase hosting root)
+     └─ context-first/ (submodule → github.com/benmcnulty/context-first)
+```
+
+Firebase Hosting serves `public/` as static files with **no build step** —
+`hosting.ignore` already excludes dotfiles (`**/.*`), so the submodule's
+`.git` directory is never deployed, and the checked-out submodule content
+deploys exactly as committed. No `firebase.json` rewrite is required:
+`hosting.cleanUrls` is unset (default `false`), so
+`public/context-first/index.html` serves at the canonical `/context-first/` URL
+directly, same as every other static page on the site — no redirect
+involved, and `/prehog/` remains its own separate, unrelated static page.
+
+**Commit order for any change:** `context-first` submodule commit → `public`
+(bumps the submodule ref) → root repo (if tests/config also changed).
+
+## Critical rendering path
+
+`index.html` links the host design-system files directly, in cascade order,
+before it links `context-first.css`. Do not replace these links with CSS `@import`s:
+imports create a dependent stylesheet waterfall on a cold load and can expose
+unstyled content before the deck is ready. The small inline deck bootstrap
+sets the opening/deep-linked slide and reads the stored view-mode
+preference (`contextfirst:viewmode`) before styles paint — the latter matters
+because a returning reference-mode visitor must never see even a flash of
+the paged layout before the deferred controller script runs. With
+JavaScript disabled the bootstrap does not run at all, so all nine
+sections remain readable in sequence regardless.
+
+## Paged layout and motion (present mode)
+
+Present mode — the default, guided narrative — is a four-row viewport
+grid: measured host navigation, `.deck-toolbar` (see below), a flexible
+slide stage, and an intrinsically sized controller. The controller owns
+its real height (including safe-area padding), so the slide receives
+exactly the remaining space at any viewport or aspect ratio. Dense slides
+scroll inside that stage while navigation remains visible.
+
+Slides are absolutely overlaid inside an isolated stage. Entering and leaving
+slides animate only `transform` and `opacity`, so two slides never re-enter
+layout during a transition. Progress and autoplay indicators use `scaleX()`
+instead of animated width, and the continuously moving loop illustration uses
+SVG transform rotation instead of stroke repainting. Inactive slides are both
+`inert` and `aria-hidden`.
+
+## Reference mode (Session D, Phase 6)
+
+Reference mode is the second, browsable way to consume the page —
+selectable and persisted (`localStorage`, key `contextfirst:viewmode`), not a
+separate route. Toggling to it removes `.js-paged` with JavaScript still
+running, which lands on the *same* base CSS the no-JavaScript document
+already used: every slide becomes a normal, non-`inert` block in ordinary
+document flow, no bespoke second layout written for it. `.deck-chrome`
+(progress bar, dots, prev/next, autoplay) is hidden — none of it describes
+a state that exists once every slide is already visible.
+
+`.deck-toolbar` (the mode toggle and the Contents button) is
+`position: sticky`, uniquely on this page — every other fixed-position
+attempt at a persistent control on this site was abandoned during Session
+C's consent-UI work for colliding with some page's own content (see
+`benlive.tv/docs/ARCHITECTURE.md`). Sticky avoids that class of problem
+differently: it stays in normal document flow (contributing real layout
+height, unlike `position: fixed`) and only pins to the viewport edge
+while its containing block is in view. It has to behave this way here
+specifically because reference mode's document can run several viewports
+long — without it, the toolbar (the only way back to present mode, or to
+open Contents) scrolls out of reach after the first section, and a
+visitor would have to scroll all the way back to the top just to reach
+it.
+
+A scrollspy (`IntersectionObserver`, a thin trigger line at vertical
+center rather than an area threshold — most slides are taller than any
+reasonably-sized center band, so an area-based threshold is
+geometrically unsatisfiable for them) keeps `currentIndex`, the URL hash,
+and `data-slide` in sync with manual scrolling, so switching back to
+present mode restores paging at whatever section was actually being
+read, and reference-mode section reads still answer the same "which
+sections hold attention" question `contextfirst_slide_viewed` was built for in
+present mode.
+
+## Why not write the page directly into the `public` repo?
+
+Every other static sub-experience on `benlive.tv` (`/ai-lab/`, `/port/`,
+`/hire-me/`) is written directly into the `public` repo. `context-first` breaks
+that pattern on purpose: this specific artifact needs to be independently
+cloneable and reviewable as a complete, self-contained unit — its
+provenance *is* part of what it's demonstrating.
+
+## Required Content-Security-Policy delta
+
+`benlive.tv`'s `firebase.json` defines a strict CSP. `analytics.js` loads
+PostHog's published `posthog-js` ES module build (`dist/module.js`, pinned
+to a specific version) from `cdn.jsdelivr.net` via dynamic `import()`,
+rather than PostHog's array.js/array.full.js "snippet" bootstrap — the
+latter expects a specific pre-existing `window.posthog` queue-stub shape
+that isn't documented anywhere reproducible; two earlier attempts at
+hand-reconstructing it both failed (see git history on `analytics.js`).
+
+That choice only covers the *initial* module load, though:
+
+- `script-src` already allows `https://cdn.jsdelivr.net` for other site
+  dependencies, so the initial module loads with no change there.
+- `connect-src` already includes a bare `https:`, so any HTTPS ingestion
+  endpoint — PostHog's own domain or the reverse proxy below — needs no
+  `connect-src` edit either.
+- **But the loaded SDK still dynamically fetches its own feature bundles at
+  runtime** — `array/<token>/config.js` on init, plus `static/surveys.js`
+  and `static/exception-autocapture.js` once those features are enabled —
+  regardless of where the initial module came from. This was missed on a
+  first pass (assumed jsDelivr covered everything) and only surfaced by
+  watching real network requests against a live token; the corrected CSP
+  restores the origin these load from.
+
+**Reverse proxy changes which origin that is.** `analytics.js`'s `api_host`
+points at `https://t.benlive.tv` (a PostHog-managed reverse proxy — see
+`docs/decisions.md`), not `us.i.posthog.com` directly, and the SDK's dynamic
+feature-bundle fetches follow `api_host`. So the origin `script-src` needs to
+allowlist is the proxy host, not PostHog's asset CDN:
+
+```diff
+  script-src 'self' 'unsafe-inline' 'unsafe-eval'
+    https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com
+-   https://code.jquery.com https://www.gstatic.com https://apis.google.com;
++   https://code.jquery.com https://www.gstatic.com https://apis.google.com
++   https://us-assets.i.posthog.com https://t.benlive.tv;
++ worker-src 'self' blob:;
+```
+
+`https://us-assets.i.posthog.com` stays allowlisted too, even though nothing
+currently loads from it: it's the origin the SDK would fall back to if
+`api_host`/the proxy config were ever cleared, so removing it would trade a
+defensive allowance for a CSP line the SDK doesn't strictly need today.
+
+`worker-src` doesn't exist in the current policy at all, which means it
+falls back to `default-src 'self'`. PostHog's Session Replay compresses
+recording data in a `blob:`-sourced web worker; without this directive,
+replay fails silently in the browser console with no user-visible symptom
+other than "no replays ever show up in PostHog." This is the single most
+likely production-only failure for this project — the local emulator has
+no CSP enforcement gap to reveal it.
+
+**Why this is guarded by a test, not just this doc:** `firebase.json`
+matches a pattern in the host repo's root `.gitignore`, but it was already
+tracked before that pattern was added, so ignore rules don't apply to it —
+edits to it are versioned normally, in the host repo's git history.
+The test exists anyway as a second, independent guard: `tests/context-first.spec.js`
+(in the host repo) asserts the *served* `Content-Security-Policy` response
+header contains `worker-src 'self' blob:`. If someone regenerates
+`firebase.json` from a template, or the deployed value drifts from what's
+committed for any other reason, that test fails instead of Session Replay
+silently going dark in production.
+
+## Deployment
+
+No build step, so there's no injection point between "committed" and
+"served" — whatever's in this repo's `index.html` is what's live. That's
+fine here: a PostHog **project API key** (the `posthogToken` value) is a
+client-side, write-only identifier by design — the same value ships inside
+every PostHog browser SDK on every site that uses one, and PostHog's own
+docs embed it directly in the snippet. It is not a secret and doesn't need
+server-side injection.
+
+The real project token is set directly in `index.html`'s `<head>` via
+`window.__BL_ANALYTICS_CONFIG__` and committed like any other content
+change — no separate secrets pipeline required, for the
+write-only-identifier reason above. **This config is read by the host
+site's shared analytics layer** (`benlive.tv`'s
+`public/js/analytics/index.js`), not by this repo's own `analytics.js` —
+see "Where PostHog init actually lives" below. It's set here purely
+for the same transparency reason it always was (so the real value is
+visible in this repo's own history, not injected invisibly by the host);
+the shared layer already has this same token as its own hardcoded
+default, so **removing this override would not disable analytics** —
+init would still run with the same real project, just without this
+page's `captureExceptions`/`sessionRecording` overrides. A fork pointed
+at a different PostHog project needs its own token set in the *shared
+layer's* config, not here.
+
+## Where PostHog init actually lives
+
+This is the one place this repo's own documentation most needs to be
+read carefully, because the implementation moved and older phrasing
+elsewhere (this repo's git history, and until this session's own fix,
+its docs) can still describe the pre-migration shape:
+
+- **`benlive.tv`'s `public/js/analytics/index.js`** is the only file that
+  calls `posthog.init()`. It owns SDK loading, consent gating (reading
+  `BenLiveConsent`, denying capture when consent isn't granted), the
+  pending-event queue for calls made before the SDK finishes loading, and
+  persistence (`localStorage+cookie`).
+- **This repo's `analytics.js` is a thin domain adapter**, not an
+  initializer. It maps this page's own `contextfirst:*` DOM events (dispatched
+  by `context-first.js`) onto `contextfirst_*` PostHog events via
+  `window.BenLiveAnalytics.capture()` — the shared layer's trusted-adapter
+  entry point, which bypasses the shared `bl_*` taxonomy allowlist (that
+  allowlist exists for the shared layer's own generic event bridge, not
+  for a page that already owns its own event contract) but still goes
+  through the one shared consent gate, PostHog instance, and queue. It
+  also owns what's genuinely local to this page: the Survey UI and the
+  recursive live-event-log panel.
+- **This page's own config** (`window.__BL_ANALYTICS_CONFIG__`, above)
+  only ever supplies overrides the shared layer reads at init time — it
+  cannot make this repo's own `analytics.js` initialize anything, because
+  that file has no init code path to trigger.
+
+Before changing anything analytics-related in this repo, check which of
+these two files actually owns the behavior in question —
+`docs/analytics.md` states this for each documented event and setting.
+
+Rollback is simple by construction: `/context-first` is purely additive. Removing
+the submodule mount and redeploying `firebase deploy --only hosting`
+reverts the site to its exact prior state.
