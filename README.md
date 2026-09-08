@@ -2,19 +2,16 @@
 
 **Context before employment. Still.**
 
-A responsive, PostHog-instrumented presentation, generalized from
-[`prehog`](https://github.com/benmcnulty/prehog), my original application to
-the **Context Engineer** role on PostHog's **Wizard & Docs** team. I didn't
-get the role. What I took from the process, reading PostHog's own public
-handbook and *No Rules Rules* along the way, was worth keeping: a genuine
-appreciation for a fully-remote, context-over-control way of working that
-I'm now using as a standard for my own job search, not just for one
-company. `prehog` stays exactly as it was, in case a future PostHog-specific
-opportunity makes it relevant again; this repo reuses the same working
-implementation with the narrative reframed. Live at
-[benlive.tv/context-first](https://benlive.tv/context-first); the full story
-of why this exists is at
-[benlive.tv/blog/what-a-posthog-application-taught-me](https://benlive.tv/blog/what-a-posthog-application-taught-me/).
+A responsive, PostHog-instrumented presentation about clear documentation,
+observable systems, and responsible autonomy. It grew out of
+[`prehog`](https://github.com/benmcnulty/prehog), originally developed while
+exploring PostHog's Context Engineer role. That application is complete;
+both projects are maintained case studies, and I am actively considering
+other opportunities with teams that share these principles.
+
+Live at [benlive.tv/context-first](https://benlive.tv/context-first).
+The original [project retrospective](https://benlive.tv/blog/what-a-posthog-application-taught-me/)
+provides historical context.
 
 ## Results
 

@@ -5,20 +5,11 @@ prefer `README.md` — this file trades narrative for density.
 
 ## Mission
 
-`context-first` is a static, single-page presentation deployed at
-`benlive.tv/context-first`, instrumented with PostHog. It is a
-generalized spin-off of [`prehog`](https://github.com/benmcnulty/prehog),
-Ben's original application for PostHog's Context Engineer role — he
-didn't get the role, and `prehog` stays exactly as it was in case a
-future PostHog-specific opportunity makes it relevant again. This repo
-reuses the same working implementation but reframes the narrative from
-"why hire me for this role" to "why this way of working is the standard
-I hold my job search to now," and it's also a shipped analytics case
-study in its own right, both framings stated explicitly (see the page's
-own metadata and the "what stuck with me" slide), not one silently
-replacing the other. It is meant to be a genuinely good small system on
-its own terms. Optimize changes for **small surface area × correctness ×
-explainability**, not feature growth.
+`context-first` is a maintained context-engineering and analytics case study. The
+original PostHog application is complete. Ben is now exploring other opportunities
+with similar principles and values. Preserve that history without implying an
+active candidacy, endorsement, or knowledge of private hiring decisions. Both
+decks share usability improvements; their analytics event namespaces remain separate.
 
 The page works two ways: **present** mode (default) is the original
 guided, paged narrative; **reference** mode is the same content as a
