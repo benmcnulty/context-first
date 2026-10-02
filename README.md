@@ -19,8 +19,9 @@ provides historical context.
   navigation, content-proportional auto-advance) or, toggled and persisted,
   a normal browsable long-form document. Same content, a visitor's choice,
   not two different pages.
-- Full no-JS fallback (every section readable without JavaScript), zero
-  `wcag2a`/`wcag2aa` violations in either view mode.
+- A no-JS document fallback and accessibility-oriented navigation, focus
+  management and reduced-motion handling. Automated accessibility checks are
+  scoped to the host's tested pages/states; they are not a WCAG compliance certification.
 - The same production PostHog JS SDK implementation `prehog` shipped first:
   Product Analytics, masked Session Replay, exception tracking, a real
   custom-rendered Survey, and one flag-gated feature, all routed through a
@@ -73,6 +74,28 @@ docs/            architecture.md, analytics.md, decisions.md
 AGENTS.md        Same project context, structured for a coding agent
 ```
 
+## Preview and verification boundaries
+
+There is no package manifest or build step. A partial source preview can be served with
+`python -m http.server 8000`, then opened at <http://localhost:8000>. Host-absolute
+CSS, navigation, analytics and chat resources are not bundled here, so that preview
+does not reproduce the hosted page. It needs no API credentials for source inspection.
+
+Public CI runs JavaScript/CSS linting and a tracked-content secret pattern check.
+The Playwright journeys referenced above live in the separate host checkout and
+are not reproducible from this repository alone. Maintainers with that checkout
+can follow the host test command in [AGENTS.md](AGENTS.md).
+
+The 2026-10-02 portfolio review observed the hosted present/reference toggle and
+navigation to slide 2. It did not rerun the host browser suite or verify analytics
+delivery, mobile/reduced-motion behavior, every focus trap or all accessibility
+states. Keep future test claims tied to a dated run and exact source/host commits.
+
+Contributions should preserve stable slide anchors, the no-JS fallback, separate
+navigation/analytics modules and the documented event names/privacy boundaries.
+No standalone license file is present in this snapshot; preserve existing
+authorship and provenance when proposing changes.
+
 ## Documentation
 
 - [`docs/analytics.md`](docs/analytics.md) — event taxonomy, the question
@@ -81,5 +104,5 @@ AGENTS.md        Same project context, structured for a coding agent
   vs. declined, and why, including reversed calls
 - [`docs/architecture.md`](docs/architecture.md) — integration model, CSP
   requirements, deployment
-- [`prehog`](https://github.com/benmcnulty/prehog) — the original
-  application this repo grew out of, kept exactly as it was
+- [`prehog`](https://github.com/benmcnulty/prehog) - the original
+  application this repo grew out of, maintained as a historical companion
