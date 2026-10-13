@@ -6,8 +6,8 @@ A responsive, PostHog-instrumented presentation about clear documentation,
 observable systems, and responsible autonomy. It grew out of
 [`prehog`](https://github.com/benmcnulty/prehog), originally developed while
 exploring PostHog's Context Engineer role. That application is complete;
-both projects are maintained case studies, and I am actively considering
-other opportunities with teams that share these principles.
+both projects are maintained case studies, and I am interested in
+opportunities with teams that share these principles.
 
 Live at [benlive.tv/context-first](https://benlive.tv/context-first).
 The original [project retrospective](https://benlive.tv/blog/what-a-posthog-application-taught-me/)
